@@ -39,7 +39,7 @@ map.on('load', () => {
         type: 'line',
         source: 'boston_route',
         paint: {
-            'line-color': 'green',  // A bright green
+            'line-color': 'green',  // A bright green using hex code
             'line-width': 3,        // Thicker lines
             'line-opacity': 0.4     // Slightly less transparent
         }
@@ -55,7 +55,7 @@ map.on('load', () => {
         type: 'line',
         source: 'cambridge_route',
         paint: {
-            'line-color': 'green',  // bright green
+            'line-color': 'green',  // A green
             'line-width': 3,       // Thicker lines
             'line-opacity': 0.4    // Slightly less transparent
         }
@@ -66,34 +66,77 @@ map.on('load', () => {
     d3.json(jsonurl).then(jsonData => {
         console.log('Loaded JSON Data:', jsonData);  // Log to verify structure
 
-        const stations = jsonData.data.stations;
+        let stations = jsonData.data.stations;
         console.log('Stations Array:', stations);
 
-        // Create and append the SVG element to the #map div if it doesn't exist
-        let svg = d3.select('#map').select('svg');
-        if (svg.empty()) {
-            svg = d3.select('#map').append('svg');
-        }
+        // Load the traffic data (size of station markers)
+        const trafficUrl = 'https://dsc106.com/labs/lab07/data/bluebikes-traffic-2024-03.csv';
+        d3.csv(trafficUrl).then(trips => {
+            console.log('Loaded Traffic Data:', trips);
 
-        // Create circles for each station
-        circles = svg.selectAll('circle')
-            .data(stations)
-            .enter()
-            .append('circle')
-            .attr('r', 5)               // Radius of the circle
-            .attr('fill', 'steelblue')  // Circle fill color
-            .attr('stroke', 'white')    // Circle border color
-            .attr('stroke-width', 1)    // Circle border thickness
-            .attr('opacity', 0.8);      // Circle opacity
+            // Calculate departures and arrivals
+            const departures = d3.rollup(
+                trips,
+                v => v.length,
+                d => d.start_station_id
+            );
 
-        // Initial position when map first loads
-        updatePositions();
+            const arrivals = d3.rollup(
+                trips,
+                v => v.length,
+                d => d.end_station_id
+            );
 
-        // Reposition markers on map interactions
-        map.on('move', updatePositions);     // Update during map movement
-        map.on('zoom', updatePositions);     // Update during zooming
-        map.on('resize', updatePositions);   // Update on window resize
-        map.on('moveend', updatePositions);  // Final adjustment after movement ends
+            // Add arrivals, departures, and totalTraffic properties to each station
+            stations = stations.map(station => {
+                const id = station.short_name;
+                station.arrivals = arrivals.get(id) ?? 0;
+                station.departures = departures.get(id) ?? 0;
+                station.totalTraffic = station.arrivals + station.departures;
+                return station;
+            });
+
+            console.log('Updated Stations Array:', stations);
+
+            // Create and append the SVG element to the #map div if it doesn't exist
+            let svg = d3.select('#map').select('svg');
+            if (svg.empty()) {
+                svg = d3.select('#map').append('svg');
+            }
+
+            // Create a square root scale for circle radii
+            const radiusScale = d3.scaleSqrt()
+                .domain([0, d3.max(stations, d => d.totalTraffic)])
+                .range([0, 25]);
+
+            // Create circles for each station
+            circles = svg.selectAll('circle')
+                .data(stations)
+                .enter()
+                .append('circle')
+                .attr('r', d => radiusScale(d.totalTraffic))  // Radius based on total traffic
+                .attr('fill', 'steelblue')  // Circle fill color
+                .attr('stroke', 'white')    // Circle border color
+                .attr('stroke-width', 1)    // Circle border thickness
+                .attr('opacity', 0.6)       // Circle opacity
+                .each(function(d) {
+                    // Add <title> for browser tooltips
+                    d3.select(this)
+                        .append('title')
+                        .text(`${d.totalTraffic} trips (${d.departures} departures, ${d.arrivals} arrivals)`);
+                });
+
+            // Initial position when map first loads
+            updatePositions();
+
+            // Reposition markers on map interactions
+            map.on('move', updatePositions);     // Update during map movement
+            map.on('zoom', updatePositions);     // Update during zooming
+            map.on('resize', updatePositions);   // Update on window resize
+            map.on('moveend', updatePositions);  // Final adjustment after movement ends
+        }).catch(error => {
+            console.error('Error loading traffic data:', error);  // Handle errors if traffic data loading fails
+        });
     }).catch(error => {
         console.error('Error loading JSON:', error);  // Handle errors if JSON loading fails
     });
