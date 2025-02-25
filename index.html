@@ -14,6 +14,14 @@
 <body>
     <h1>🚴🏼‍♀️Bike Paths</h1>
     <p>A map of Boston biking activity throughout the day.</p>
+    <header>
+        <label for="slider">Filter by time:</label>
+        <input type="range" id="slider" min="-1" max="1440" value="0" step="1">
+        <div class="time-container">
+            <time id="time">11:59PM</time>
+            <em id="any-time">(any time)</em>
+        </div>
+    </header>
     <div id="map">
         <svg></svg>
     </div>
