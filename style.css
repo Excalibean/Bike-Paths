@@ -32,21 +32,62 @@ label {
 
 .time-container {
     display: flex;
+    gap: 1em;
     align-items: center;
 }
 
 time {
-    display: block;
-    margin-left: auto;
-    width: 60px; /* Set a fixed width for the time display */
+    display: inline-block;
+    margin-left: 10px;
+    width: 4.5em; /* Set a fixed width for the time display */
     text-align: right; /* Align the text to the right */
 }
 
 em {
-    display: block;
+    display: inline-block;
     font-style: italic;
     color: #999;
-    margin-left: 10px; /* Add some space between the time and the "(any time)" label */
+}
+
+div.legend {
+    display: flex;
+    gap: 1px; /* Small gap between color swatches */
+    margin-block: 1em; /* Add some space above and below the legend */
+}
+
+div.legend div {
+    flex: 1; /* Make each color swatch take up equal space */
+    padding: 0.5em 1em; /* More horizontal padding than vertical */
+    text-align: center; /* Center the text horizontally */
+    color: white; /* Ensure sufficient contrast with the background color */
+    white-space: nowrap; /* Prevent text from wrapping to the next line */
+}
+
+div.legend div:nth-child(1) {
+    background-color: steelblue; /* Color for "More departures" */
+    text-align: left; /* Align text to the left */
+}
+
+div.legend div:nth-child(2) {
+    background-color: rgb(174, 55, 201); /* Color for "Balanced" */
+    text-align: center; /* Center the text */
+}
+
+div.legend div:nth-child(3) {
+    background-color: darkorange; /* Color for "More arrivals" */
+    text-align: right; /* Align text to the right */
+}
+
+#map circle,
+.legend > div {
+    --color-departures: steelblue;
+    --color-arrivals: darkorange;
+    --color: color-mix(
+        in oklch,
+        var(--color-departures) calc(100% * var(--departure-ratio)),
+        var(--color-arrivals)
+    );
+    fill: var(--color);
 }
 
 #map {

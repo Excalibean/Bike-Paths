@@ -18,12 +18,17 @@
         <label for="slider">Filter by time:</label>
         <input type="range" id="slider" min="-1" max="1440" value="0" step="1">
         <div class="time-container">
-            <time id="time">11:59PM</time>
+            <time id="time">11:59 PM</time>
             <em id="any-time">(any time)</em>
         </div>
     </header>
     <div id="map">
         <svg></svg>
+    </div>
+    <div class="legend">
+        <div style="--departure-ratio: 1">More departures</div>
+        <div style="--departure-ratio: 0.5">Balanced</div>
+        <div style="--departure-ratio: 0">More arrivals</div>
     </div>
 </body>
 </html>

@@ -16,6 +16,7 @@ let circles;
 let radiusScale;
 let stations;
 let trips;
+let stationFlow = d3.scaleQuantize().domain([0, 1]).range([0, 0.5, 1]);
 const timeSlider = document.getElementById('slider');
 const selectedTime = document.getElementById('time');
 const anyTimeLabel = document.getElementById('any-time');
@@ -101,7 +102,10 @@ function updateScatterPlot(timeFilter) {
     circles
       .data(filteredStations, (d) => d.short_name)  // Ensure D3 tracks elements correctly
       .join('circle') // Ensure the data is bound correctly
-      .attr('r', (d) => radiusScale(d.totalTraffic)); // Update circle sizes
+      .attr('r', (d) => radiusScale(d.totalTraffic)) // Update circle radii
+      .style('--departure-ratio', (d) =>
+        stationFlow(d.departures / d.totalTraffic) // Update departure ratio
+        );
 }
 
 // Function to update the time display based on the slider value
@@ -193,6 +197,7 @@ map.on('load', async () => {
         .attr('stroke', 'white')    // Circle border color
         .attr('stroke-width', 1)    // Circle border thickness
         .attr('opacity', 0.6)       // Circle opacity
+        .style("--departure-ratio", d => stationFlow(d.departures / d.totalTraffic)) // Departure ratio
         .each(function(d) {
             // Add <title> for browser tooltips
             d3.select(this)
